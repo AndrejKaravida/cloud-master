@@ -1,0 +1,33 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30717.126
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{A07B5EB6-E848-4116-A8D0-A826331D98C6}") = "tickets_app", "tickets_app.sfproj", "{0F4BBD17-F1FC-4B5C-9268-01E45BD25428}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stateful1", "..\Stateful1\Stateful1.csproj", "{F29CC980-05D8-4BF4-8419-13F1AE8BAA99}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0F4BBD17-F1FC-4B5C-9268-01E45BD25428}.Debug|x64.ActiveCfg = Debug|x64
+		{0F4BBD17-F1FC-4B5C-9268-01E45BD25428}.Debug|x64.Build.0 = Debug|x64
+		{0F4BBD17-F1FC-4B5C-9268-01E45BD25428}.Debug|x64.Deploy.0 = Debug|x64
+		{0F4BBD17-F1FC-4B5C-9268-01E45BD25428}.Release|x64.ActiveCfg = Release|x64
+		{0F4BBD17-F1FC-4B5C-9268-01E45BD25428}.Release|x64.Build.0 = Release|x64
+		{0F4BBD17-F1FC-4B5C-9268-01E45BD25428}.Release|x64.Deploy.0 = Release|x64
+		{F29CC980-05D8-4BF4-8419-13F1AE8BAA99}.Debug|x64.ActiveCfg = Debug|x64
+		{F29CC980-05D8-4BF4-8419-13F1AE8BAA99}.Debug|x64.Build.0 = Debug|x64
+		{F29CC980-05D8-4BF4-8419-13F1AE8BAA99}.Release|x64.ActiveCfg = Release|x64
+		{F29CC980-05D8-4BF4-8419-13F1AE8BAA99}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {90AC9414-9A90-403C-B609-A8A6742D6699}
+	EndGlobalSection
+EndGlobal
