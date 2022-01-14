@@ -1,12 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<ApplicationManifest ApplicationTypeName="tickets_appType"
-                     ApplicationTypeVersion="1.0.0"
-                     xmlns="http://schemas.microsoft.com/2011/01/fabric"
-                     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ApplicationManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ApplicationTypeName="tickets_appType" ApplicationTypeVersion="1.0.0" xmlns="http://schemas.microsoft.com/2011/01/fabric">
   <Parameters>
-    <Parameter Name="WebClient_ASPNETCORE_ENVIRONMENT" DefaultValue="" />
     <Parameter Name="WebClient_InstanceCount" DefaultValue="-1" />
+    <Parameter Name="WebClient_ASPNETCORE_ENVIRONMENT" DefaultValue="" />
     <Parameter Name="Stateful1_MinReplicaSetSize" DefaultValue="3" />
     <Parameter Name="Stateful1_PartitionCount" DefaultValue="1" />
     <Parameter Name="Stateful1_TargetReplicaSetSize" DefaultValue="3" />

@@ -7,7 +7,7 @@ Project("{A07B5EB6-E848-4116-A8D0-A826331D98C6}") = "tickets_app", "tickets_app.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stateful1", "..\Stateful1\Stateful1.csproj", "{F29CC980-05D8-4BF4-8419-13F1AE8BAA99}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebClient", "WebClient\WebClient.csproj", "{FBE59880-220E-4074-B50A-AB29F34D1ACC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebClient", "WebClient\WebClient.csproj", "{58F8A4F6-772C-4945-AACC-32F9277AB137}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,14 +31,14 @@ Global
 		{F29CC980-05D8-4BF4-8419-13F1AE8BAA99}.Release|Any CPU.ActiveCfg = Release|x64
 		{F29CC980-05D8-4BF4-8419-13F1AE8BAA99}.Release|x64.ActiveCfg = Release|x64
 		{F29CC980-05D8-4BF4-8419-13F1AE8BAA99}.Release|x64.Build.0 = Release|x64
-		{FBE59880-220E-4074-B50A-AB29F34D1ACC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FBE59880-220E-4074-B50A-AB29F34D1ACC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FBE59880-220E-4074-B50A-AB29F34D1ACC}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{FBE59880-220E-4074-B50A-AB29F34D1ACC}.Debug|x64.Build.0 = Debug|Any CPU
-		{FBE59880-220E-4074-B50A-AB29F34D1ACC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FBE59880-220E-4074-B50A-AB29F34D1ACC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FBE59880-220E-4074-B50A-AB29F34D1ACC}.Release|x64.ActiveCfg = Release|Any CPU
-		{FBE59880-220E-4074-B50A-AB29F34D1ACC}.Release|x64.Build.0 = Release|Any CPU
+		{58F8A4F6-772C-4945-AACC-32F9277AB137}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58F8A4F6-772C-4945-AACC-32F9277AB137}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58F8A4F6-772C-4945-AACC-32F9277AB137}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{58F8A4F6-772C-4945-AACC-32F9277AB137}.Debug|x64.Build.0 = Debug|Any CPU
+		{58F8A4F6-772C-4945-AACC-32F9277AB137}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58F8A4F6-772C-4945-AACC-32F9277AB137}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58F8A4F6-772C-4945-AACC-32F9277AB137}.Release|x64.ActiveCfg = Release|Any CPU
+		{58F8A4F6-772C-4945-AACC-32F9277AB137}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,127 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<style>
+    table {
+        margin: 0 auto;
+    }
+
+    table {
+        color: #333;
+        background: white;
+        border: 1px solid grey;
+        font-size: 12pt;
+        border-collapse: collapse;
+        text-align: center
+    }
+
+     table thead th,
+     table tfoot th {
+        color: #777;
+        background: rgba(0,0,0,.1);
+     }
+
+     table caption {
+        padding: .5em;
+     }
+
+     table th,
+     table td {
+        padding: .5em;
+        border: 1px solid lightgrey;
+     }
+</style>
+
+<div style="border: 1px solid black; margin-left: auto; margin-right: auto; width: 800px;text-align: center ">
+    <h1>Welcome to Ticket Service</h1>
+
+    <div style="border: 1px dashed black; padding: 20px">
+
+        <h3>Dodaj novu kartu:</h3>
+
+        <p>Tip prevoza: </p>
+        @{
+            var selectList = new SelectList(
+                new List<SelectListItem>
+                {
+                    new SelectListItem {Text = "Avion", Value = "Avion"},
+                    new SelectListItem {Text = "Autobus", Value = "Autobus"},
+                    new SelectListItem {Text = "Voz", Value = "Voz"}
+                    }
+                );
+        }
+        @Html.DropDownList("lista", selectList, "Default label")
+
+        <p>Datum polaska:</p>
+        <input type="date" name="datumPolaska" value="" />
+
+        <p>Datum povratka (opciono):</p>
+        <input type="date" name="datumPovratka" value="" />
+
+        <div style="margin-top: 20px; text-align: center">
+            <button>Dodaj kartu</button>
+        </div>
+    </div>
+
+    <div style="border: 1px dashed black; padding: 20px">
+        <h3>Karte u sistemu:</h3>
+
+        <div>
+            <table>
+                <tr>
+                    <th>Redni broj</th>
+                    <th>Tip prevoza</th>
+                    <th>Datum polaska</th>
+                    <th>Datum povratka</th>
+                    <th>Status</th>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Avion</td>
+                    <td>01. februar 2022</td>
+                    <td>22. februar 2022</td>
+                    <td>Aktivan</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Voz</td>
+                    <td>10. februar 2022</td>
+                    <td>23. februar 2022</td>
+                    <td>Aktivan</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+
+    <div style="border: 1px dashed black; padding: 20px">
+        <h3>Istorija karata:</h3>
+
+        <div>
+            <table>
+                <tr>
+                    <th>Redni broj</th>
+                    <th>Tip prevoza</th>
+                    <th>Datum polaska</th>
+                    <th>Datum povratka</th>
+                    <th>Status</th>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Avion</td>
+                    <td>01. februar 2022</td>
+                    <td>22. februar 2022</td>
+                    <td>Arhiviran</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Voz</td>
+                    <td>10. februar 2022</td>
+                    <td>23. februar 2022</td>
+                    <td>Arhiviran</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
