@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Stateful1
+namespace TicketsStateful
 {
     internal static class Program
     {
@@ -12,10 +12,10 @@ namespace Stateful1
         {
             try
             {
-                ServiceRuntime.RegisterServiceAsync("Stateful1Type",
-                    context => new Stateful1(context)).GetAwaiter().GetResult();
+                ServiceRuntime.RegisterServiceAsync("TicketsStatefulType",
+                    context => new TicketsStateful(context)).GetAwaiter().GetResult();
 
-                ServiceEventSource.Current.ServiceTypeRegistered(Process.GetCurrentProcess().Id, typeof(Stateful1).Name);
+                ServiceEventSource.Current.ServiceTypeRegistered(Process.GetCurrentProcess().Id, typeof(TicketsStateful).Name);
 
                 Thread.Sleep(Timeout.Infinite);
             }

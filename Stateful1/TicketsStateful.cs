@@ -1,28 +1,37 @@
 ﻿using Microsoft.ServiceFabric.Data.Collections;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
+using Microsoft.ServiceFabric.Services.Communication.Wcf;
+using Microsoft.ServiceFabric.Services.Communication.Wcf.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Fabric;
 using System.Threading;
 using System.Threading.Tasks;
+using Common;
 
-namespace Stateful1
+namespace TicketsStateful
 {
-    internal sealed class Stateful1 : StatefulService
+    internal sealed class TicketsStateful : StatefulService
     {
-        public Stateful1(StatefulServiceContext context)
+        public TicketsStateful(StatefulServiceContext context)
             : base(context)
         { }
 
         protected override IEnumerable<ServiceReplicaListener> CreateServiceReplicaListeners()
         {
-            return new ServiceReplicaListener[0];
+            return new[]
+            {
+                new ServiceReplicaListener(context =>
+                {
+                    return new WcfCommunicationListener<IStatefulMethods>(context, new StatefulMethods(this.StateManager), WcfUtility.CreateTcpListenerBinding(), "AddTicketEndpoint");
+                }, "AddTicketEndpoint")
+            };
         }
 
         protected override async Task RunAsync(CancellationToken cancellationToken)
         {
-            var myDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, long>>("myDictionary");
+            var myDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, long>>("ticfdsfdskets");
 
             while (true)
             {

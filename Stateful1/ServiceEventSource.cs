@@ -3,9 +3,9 @@ using System.Diagnostics.Tracing;
 using System.Fabric;
 using System.Threading.Tasks;
 
-namespace Stateful1
+namespace TicketsStateful
 {
-    [EventSource(Name = "MyCompany-tickets_app-Stateful1")]
+    [EventSource(Name = "MyCompany-tickets_app-TicketsStateful")]
     internal sealed class ServiceEventSource : EventSource
     {
         public static readonly ServiceEventSource Current = new ServiceEventSource();

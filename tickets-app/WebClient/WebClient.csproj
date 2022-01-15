@@ -17,6 +17,11 @@
     <PackageReference Include="Microsoft.ServiceFabric.AspNetCore.Kestrel" Version="5.2.1363" />
     <PackageReference Include="Microsoft.ServiceFabric.Data" Version="5.2.1363" />
     <PackageReference Include="Microsoft.ServiceFabric.Services" Version="5.2.1363" />
+    <PackageReference Include="Microsoft.ServiceFabric.Services.Wcf" Version="5.2.1363" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\Common.csproj" />
   </ItemGroup>
 
 </Project>

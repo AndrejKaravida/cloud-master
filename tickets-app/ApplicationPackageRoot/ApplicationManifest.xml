@@ -3,9 +3,9 @@
   <Parameters>
     <Parameter Name="WebClient_InstanceCount" DefaultValue="-1" />
     <Parameter Name="WebClient_ASPNETCORE_ENVIRONMENT" DefaultValue="" />
-    <Parameter Name="Stateful1_MinReplicaSetSize" DefaultValue="3" />
-    <Parameter Name="Stateful1_PartitionCount" DefaultValue="1" />
-    <Parameter Name="Stateful1_TargetReplicaSetSize" DefaultValue="3" />
+    <Parameter Name="TicketsStateful_MinReplicaSetSize" DefaultValue="3" />
+    <Parameter Name="TicketsStateful_PartitionCount" DefaultValue="1" />
+    <Parameter Name="TicketsStateful_TargetReplicaSetSize" DefaultValue="3" />
   </Parameters>
   <!-- Import the ServiceManifest from the ServicePackage. The ServiceManifestName and ServiceManifestVersion 
        should match the Name and Version attributes of the ServiceManifest element defined in the 
@@ -18,7 +18,7 @@
     </EnvironmentOverrides>
   </ServiceManifestImport>
   <ServiceManifestImport>
-    <ServiceManifestRef ServiceManifestName="Stateful1Pkg" ServiceManifestVersion="1.0.0" />
+    <ServiceManifestRef ServiceManifestName="TicketsStatefulPkg" ServiceManifestVersion="1.0.0" />
     <ConfigOverrides />
   </ServiceManifestImport>
   <DefaultServices>
@@ -32,9 +32,9 @@
         <SingletonPartition />
       </StatelessService>
     </Service>
-    <Service Name="Stateful1" ServicePackageActivationMode="ExclusiveProcess">
-      <StatefulService ServiceTypeName="Stateful1Type" TargetReplicaSetSize="[Stateful1_TargetReplicaSetSize]" MinReplicaSetSize="[Stateful1_MinReplicaSetSize]">
-        <UniformInt64Partition PartitionCount="[Stateful1_PartitionCount]" LowKey="-9223372036854775808" HighKey="9223372036854775807" />
+    <Service Name="TicketsStateful" ServicePackageActivationMode="ExclusiveProcess">
+      <StatefulService ServiceTypeName="TicketsStatefulType" TargetReplicaSetSize="[TicketsStateful_TargetReplicaSetSize]" MinReplicaSetSize="[TicketsStateful_MinReplicaSetSize]">
+        <UniformInt64Partition PartitionCount="[TicketsStateful_PartitionCount]" LowKey="-9223372036854775808" HighKey="9223372036854775807" />
       </StatefulService>
     </Service>
   </DefaultServices>

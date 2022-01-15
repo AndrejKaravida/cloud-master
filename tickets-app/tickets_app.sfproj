@@ -32,7 +32,7 @@
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Stateful1\Stateful1.csproj" />
+    <ProjectReference Include="..\Stateful1\TicketsStateful.csproj" />
     <ProjectReference Include="WebClient\WebClient.csproj">
       <ServiceLaunchUrl>http://{MachineName}:{ServicePort}/</ServiceLaunchUrl>
     </ProjectReference>

@@ -16,21 +16,21 @@
         text-align: center
     }
 
-     table thead th,
-     table tfoot th {
-        color: #777;
-        background: rgba(0,0,0,.1);
-     }
+        table thead th,
+        table tfoot th {
+            color: #777;
+            background: rgba(0,0,0,.1);
+        }
 
-     table caption {
-        padding: .5em;
-     }
+        table caption {
+            padding: .5em;
+        }
 
-     table th,
-     table td {
-        padding: .5em;
-        border: 1px solid lightgrey;
-     }
+        table th,
+        table td {
+            padding: .5em;
+            border: 1px solid lightgrey;
+        }
 </style>
 
 <div style="border: 1px solid black; margin-left: auto; margin-right: auto; width: 800px;text-align: center ">
@@ -40,33 +40,34 @@
 
         <h3>Dodaj novu kartu:</h3>
 
-        <p>Tip prevoza: </p>
-        @{
-            var selectList = new SelectList(
-                new List<SelectListItem>
-                {
-                    new SelectListItem {Text = "Avion", Value = "Avion"},
-                    new SelectListItem {Text = "Autobus", Value = "Autobus"},
-                    new SelectListItem {Text = "Voz", Value = "Voz"}
-                    }
-                );
-        }
-        @Html.DropDownList("lista", selectList, "Default label")
+        <form action="/Home/AddTicket" method="post">
+            <label>Tip prevoza:</label>
 
-        <p>Datum polaska:</p>
-        <input type="date" name="datumPolaska" value="" />
+            <select name="transportationType">
+                <option value="Avion">Avion</option>
+                <option value="Autobus">Autobus</option>
+                <option value="Voz">Voz</option>
+            </select>
 
-        <p>Datum povratka (opciono):</p>
-        <input type="date" name="datumPovratka" value="" />
+            <label>Datum polaska:</label>
+            <input type="date" name="departureDate" />
 
-        <div style="margin-top: 20px; text-align: center">
-            <button>Dodaj kartu</button>
-        </div>
+            <label>Datum povratka (opciono):</label>
+            <input type="date" name="returnDate" />
+
+            <div style="margin-top: 20px; text-align: center">
+                <button type="submit">Dodaj kartu</button>
+            </div>
+        </form>
     </div>
 
     <div style="border: 1px dashed black; padding: 20px">
         <h3>Karte u sistemu:</h3>
 
+        <button type="button" id="addressSearch"
+                onclick="location.href='@Url.Action("GetActiveTickets", "Home")'">
+            Dobavi sve karte
+        </button>
         <div>
             <table>
                 <tr>
@@ -76,20 +77,17 @@
                     <th>Datum povratka</th>
                     <th>Status</th>
                 </tr>
-                <tr>
-                    <td>1</td>
-                    <td>Avion</td>
-                    <td>01. februar 2022</td>
-                    <td>22. februar 2022</td>
-                    <td>Aktivan</td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>Voz</td>
-                    <td>10. februar 2022</td>
-                    <td>23. februar 2022</td>
-                    <td>Aktivan</td>
-                </tr>
+                @for (var i = 0; i < @ViewBag?.activeTickets?.Count; i++)
+                {
+                    <tr>
+                        <td>@i</td>
+                        <td>@ViewBag?.activeTickets[i]?.TransportationType</td>
+                        <td>@ViewBag?.activeTickets[i]?.DepartureTime</td>
+                        <td>@ViewBag?.activeTickets[i]?.ReturnTime</td>
+                        <td>Aktivan</td>
+                        <td><button type="button" onclick="location.href='@Url.Action("ArchiveAirplane", "Home")'">Kupi</button></td>
+                    </tr>
+                }
             </table>
         </div>
     </div>
@@ -107,6 +105,7 @@
                     <th>Datum povratka</th>
                     <th>Status</th>
                 </tr>
+               
                 <tr>
                     <td>1</td>
                     <td>Avion</td>
