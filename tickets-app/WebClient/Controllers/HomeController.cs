@@ -8,6 +8,7 @@ using Microsoft.ServiceFabric.Services.Communication.Wcf.Client;
 using System;
 using System.Collections.Generic;
 using System.Fabric;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace WebClient.Controllers
@@ -39,16 +40,11 @@ namespace WebClient.Controllers
                 FabricClient fabricClient = new FabricClient();
                 int partitionsNumber = (await fabricClient.QueryManager.GetPartitionListAsync(new Uri("fabric:/tickets_app/TicketsStateful"))).Count;
                 var binding = WcfUtility.CreateTcpClientBinding();
-                int index = 0;
 
-                for (int i = 0; i < partitionsNumber; i++)
-                {
-                   statefullService = new ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>>(
-                        new WcfCommunicationClientFactory<IStatefulMethods>(clientBinding: binding),
-                        new Uri("fabric:/tickets_app/TicketsStateful"),
-                        new ServicePartitionKey(index % partitionsNumber));
-                    index++;
-                }
+                    statefullService = new ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>>(
+                         new WcfCommunicationClientFactory<IStatefulMethods>(clientBinding: binding),
+                         new Uri("fabric:/tickets_app/TicketsStateful")
+                         );
             }
             catch (Exception ex) { }
         }
@@ -60,20 +56,13 @@ namespace WebClient.Controllers
                 FabricClient fabricClient = new FabricClient();
                 int partitionsNumber = (await fabricClient.QueryManager.GetPartitionListAsync(new Uri("fabric:/tickets_app/StatelessHistory"))).Count;
                 var binding = WcfUtility.CreateTcpClientBinding();
-                int index = 0;
 
-                for (int i = 0; i < partitionsNumber; i++)
-                {
-                    historyStatelessService = new ServicePartitionClient<WcfCommunicationClient<IHistoryStatelessMethods>>(
-                         new WcfCommunicationClientFactory<IHistoryStatelessMethods>(clientBinding: binding),
-                         new Uri("fabric:/tickets_app/StatelessHistory"),
-                         new ServicePartitionKey(index % partitionsNumber));
-                    index++;
-                }
+                historyStatelessService = new ServicePartitionClient<WcfCommunicationClient<IHistoryStatelessMethods>>(
+                     new WcfCommunicationClientFactory<IHistoryStatelessMethods>(clientBinding: binding),
+                     new Uri("fabric:/tickets_app/StatelessHistory"));
             }
             catch (Exception ex) { }
         }
-
 
         [HttpGet]
         public async Task<IActionResult> GetActiveTickets()
@@ -83,8 +72,8 @@ namespace WebClient.Controllers
                 var tickets = await statefullService.InvokeWithRetryAsync(client => client.Channel.GetAllTickets());
                 ViewBag.activeTickets = tickets;
 
-            } 
-            catch(Exception ex) { }
+            }
+            catch (Exception ex) { }
 
             return View("Index");
         }
@@ -106,11 +95,12 @@ namespace WebClient.Controllers
         [HttpPost]
         public async Task<IActionResult> AddTicket(string transportationType, DateTime departureDate, DateTime returnDate)
         {
-            Ticket ticket = new Ticket() { 
+            Ticket ticket = new Ticket()
+            {
                 Id = new Random().Next(1, 10000),
                 TransportationType = transportationType,
-                PurchaseDate = DateTime.UtcNow,
-                DepartureTime = departureDate, 
+                PurchaseDate = DateTime.UtcNow.AddSeconds(15),
+                DepartureTime = departureDate,
                 ReturnTime = returnDate
             };
 
@@ -118,7 +108,8 @@ namespace WebClient.Controllers
             {
                 await statefullService.InvokeWithRetryAsync(client => client.Channel.AddTicket(ticket));
 
-            } catch(Exception ex) { }
+            }
+            catch (Exception ex) { }
 
             return View("Index");
         }

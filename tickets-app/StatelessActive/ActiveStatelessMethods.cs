@@ -20,5 +20,11 @@ namespace StatelessActive
             var tickets = await _mongoCollection.Find(_ => true).ToListAsync();
             return tickets;
         }
+
+        public void RemoveFromActiveDatabase(int ticketId)
+        {
+            _mongoCollection.FindOneAndDelete(x => x.Id == ticketId);
+            return;
+        }
     }
 }

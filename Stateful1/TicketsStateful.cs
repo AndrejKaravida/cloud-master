@@ -18,7 +18,7 @@ namespace TicketsStateful
 {
     internal sealed class TicketsStateful : StatefulService
     {
-        private static ServicePartitionClient<WcfCommunicationClient<IActiveStatelessMethods>>activeStatelessService;
+        private static ServicePartitionClient<WcfCommunicationClient<IActiveStatelessMethods>> activeStatelessService;
 
         public TicketsStateful(StatefulServiceContext context)
             : base(context)
@@ -43,16 +43,10 @@ namespace TicketsStateful
                 FabricClient fabricClient = new FabricClient();
                 int partitionsNumber = (await fabricClient.QueryManager.GetPartitionListAsync(new Uri("fabric:/tickets_app/StatelessActive"))).Count;
                 var binding = WcfUtility.CreateTcpClientBinding();
-                int index = 0;
 
-                for (int i = 0; i < partitionsNumber; i++)
-                {
-                    activeStatelessService = new ServicePartitionClient<WcfCommunicationClient<IActiveStatelessMethods>>(
-                         new WcfCommunicationClientFactory<IActiveStatelessMethods>(clientBinding: binding),
-                         new Uri("fabric:/tickets_app/StatelessActive"),
-                         new ServicePartitionKey(index % partitionsNumber));
-                    index++;
-                }
+                activeStatelessService = new ServicePartitionClient<WcfCommunicationClient<IActiveStatelessMethods>>(
+                     new WcfCommunicationClientFactory<IActiveStatelessMethods>(clientBinding: binding),
+                     new Uri("fabric:/tickets_app/StatelessActive"));
             }
             catch (Exception ex) { }
         }
@@ -64,23 +58,26 @@ namespace TicketsStateful
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-
-                var ticketsFromDb = await activeStatelessService.InvokeWithRetryAsync(client => client.Channel.GetAllActiveTickets());
-
-                using (var tx = this.StateManager.CreateTransaction())
+                try
                 {
-                    if(await myDictionary.GetCountAsync(tx) == 0)
+                    var ticketsFromDb = await activeStatelessService.InvokeWithRetryAsync(client => client.Channel.GetAllActiveTickets());
+
+                    using (var tx = this.StateManager.CreateTransaction())
                     {
-                        foreach(var ticket in ticketsFromDb)
+                        if (await myDictionary.GetCountAsync(tx) == 0)
                         {
-                            await myDictionary.AddOrUpdateAsync(tx, ticket.Id, ticket, (key, value) => value);
+                            foreach (var ticket in ticketsFromDb)
+                            {
+                                await myDictionary.AddOrUpdateAsync(tx, ticket.Id, ticket, (key, value) => value);
+                            }
                         }
+
+                        await tx.CommitAsync();
                     }
 
-                    await tx.CommitAsync();
                 }
-
-                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                catch (Exception e) { }
+                await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
             }
         }
     }

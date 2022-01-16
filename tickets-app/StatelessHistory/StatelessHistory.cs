@@ -45,16 +45,10 @@ namespace StatelessHistory
                 FabricClient fabricClient = new FabricClient();
                 int partitionsNumber = (await fabricClient.QueryManager.GetPartitionListAsync(new Uri("fabric:/tickets_app/TicketsStateful"))).Count;
                 var binding = WcfUtility.CreateTcpClientBinding();
-                int index = 0;
 
-                for (int i = 0; i < partitionsNumber; i++)
-                {
                     servicePartitionClient = new ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>>(
                          new WcfCommunicationClientFactory<IStatefulMethods>(clientBinding: binding),
-                         new Uri("fabric:/tickets_app/TicketsStateful"),
-                         new ServicePartitionKey(index % partitionsNumber));
-                    index++;
-                }
+                         new Uri("fabric:/tickets_app/TicketsStateful"));
             }
             catch (Exception ex) { }
         }
@@ -100,7 +94,7 @@ namespace StatelessHistory
                         var existingTicket = await mongoCollection.Find(x => x.Id == ticket.Id).SingleOrDefaultAsync();
                         if (existingTicket == null)
                         {
-                            if(ticket.DepartureTime > DateTime.UtcNow)
+                            if(ticket.PurchaseDate < DateTime.UtcNow)
                             {
                                 await mongoCollection.InsertOneAsync(ticket);
                                 await servicePartitionClient.InvokeWithRetryAsync(client => client.Channel.RemoveTicketById(ticket.Id));
@@ -111,7 +105,7 @@ namespace StatelessHistory
                 }
                 catch (Exception ex) { }
 
-                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
             }
         }
     }

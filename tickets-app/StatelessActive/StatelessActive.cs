@@ -46,14 +46,9 @@ namespace StatelessActive
                 var binding = WcfUtility.CreateTcpClientBinding();
                 int index = 0;
 
-                for (int i = 0; i < partitionsNumber; i++)
-                {
-                    servicePartitionClient = new ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>>(
-                         new WcfCommunicationClientFactory<IStatefulMethods>(clientBinding: binding),
-                         new Uri("fabric:/tickets_app/TicketsStateful"),
-                         new ServicePartitionKey(index % partitionsNumber));
-                    index++;
-                }
+                servicePartitionClient = new ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>>(
+                     new WcfCommunicationClientFactory<IStatefulMethods>(clientBinding: binding),
+                     new Uri("fabric:/tickets_app/TicketsStateful"));
             }
             catch (Exception ex) { }
         }
@@ -106,7 +101,7 @@ namespace StatelessActive
                 }
                 catch (Exception ex) { }
 
-                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
             }
         }
     }

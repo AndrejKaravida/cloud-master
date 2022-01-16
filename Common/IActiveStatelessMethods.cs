@@ -10,5 +10,8 @@ namespace Common
     {
         [OperationContract]
         Task<List<Ticket>> GetAllActiveTickets();
+
+        [OperationContract]
+        void RemoveFromActiveDatabase(int ticketId);
     }
 }
