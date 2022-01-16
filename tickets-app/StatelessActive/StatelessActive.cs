@@ -10,18 +10,31 @@ using Common;
 using Microsoft.ServiceFabric.Services.Communication.Wcf.Client;
 using Microsoft.ServiceFabric.Services.Communication.Client;
 using Microsoft.ServiceFabric.Services.Client;
-using System.Diagnostics;
+using MongoDB.Driver;
+using Common.Models;
+using System.Globalization;
+using Microsoft.ServiceFabric.Services.Communication.Wcf.Runtime;
+using System.ServiceModel;
 
 namespace StatelessActive
 {
     internal sealed class StatelessActive : StatelessService
     {
         private static ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>> servicePartitionClient;
+        private static IMongoCollection<Ticket> mongoCollection;
 
         public StatelessActive(StatelessServiceContext context)
             : base(context)
         {
             OpenConnection();
+            OpenDbConnection();
+        }
+
+        private void OpenDbConnection()
+        {
+            var settings = MongoClientSettings.FromConnectionString("mongodb+srv://admin:admin123@energyweathercluster.lkam4.mongodb.net/ticketsDatabase?retryWrites=true&w=majority");
+            var client = new MongoClient(settings);
+            mongoCollection = client.GetDatabase("ticketsDatabase").GetCollection<Ticket>("active");
         }
 
         private async void OpenConnection()
@@ -47,30 +60,29 @@ namespace StatelessActive
 
         protected override IEnumerable<ServiceInstanceListener> CreateServiceInstanceListeners()
         {
-            return new ServiceInstanceListener[0];
-            //return new List<ServiceInstanceListener>(1)
-            //{
-            //    new ServiceInstanceListener(context=> this.CreateWcfCommunicationListener(context), "ActiveServiceEndpoint")
-            //};
+            return new List<ServiceInstanceListener>(1)
+            {
+                new ServiceInstanceListener(context=> this.CreateWcfCommunicationListener(context), "ActiveServiceEndpoint")
+            };
         }
 
-        //private ICommunicationListener CreateWcfCommunicationListener (StatelessServiceContext context)
-        //{
-        //    string host = context.NodeContext.IPAddressOrFQDN;
-        //    var endpointConfig = context.CodePackageActivationContext.GetEndpoint("ActiveServiceEndpoint");
-        //    int port = endpointConfig.Port;
-        //    var scheme = endpointConfig.Protocol.ToString();
-        //    string uri = string.Format(CultureInfo.InvariantCulture, "net.{0}://{1}:{2}/ActiveServiceEndpoint", scheme, host, port);
+        private ICommunicationListener CreateWcfCommunicationListener(StatelessServiceContext context)
+        {
+            string host = context.NodeContext.IPAddressOrFQDN;
+            var endpointConfig = context.CodePackageActivationContext.GetEndpoint("ActiveServiceEndpoint");
+            int port = endpointConfig.Port;
+            var scheme = endpointConfig.Protocol.ToString();
+            string uri = string.Format(CultureInfo.InvariantCulture, "net.{0}://{1}:{2}/ActiveServiceEndpoint", scheme, host, port);
 
-        //    var listener = new WcfCommunicationListener<IActiveStatelessMethods>(
-        //        serviceContext: context, 
-        //        wcfServiceObject: this, 
-        //        listenerBinding: WcfUtility.CreateTcpListenerBinding(),
-        //        address: new EndpointAddress(uri)
-        //    );
+            var listener = new WcfCommunicationListener<IActiveStatelessMethods>(
+                serviceContext: context,
+                wcfServiceObject: new ActiveStatelessMethods(mongoCollection),
+                listenerBinding: WcfUtility.CreateTcpListenerBinding(),
+                address: new EndpointAddress(uri)
+            );
 
-        //    return listener;
-        //}
+            return listener;
+        }
 
         protected override async Task RunAsync(CancellationToken cancellationToken)
         {
@@ -81,10 +93,18 @@ namespace StatelessActive
                 try
                 {
                     var tickets = await servicePartitionClient.InvokeWithRetryAsync(client => client.Channel.GetAllTickets());
-                    ServiceEventSource.Current.ServiceMessage(this.Context, "Tickets count:", tickets.Count);
-                    Debug.WriteLine("Count ", tickets.Count);
 
-                } catch(Exception ex) { }
+                    foreach (var ticket in tickets)
+                    {
+                        var existingTicket = await mongoCollection.Find(x => x.Id == ticket.Id).SingleOrDefaultAsync();
+                        if (existingTicket == null)
+                        {
+                            await mongoCollection.InsertOneAsync(ticket);
+                        }
+                    }
+
+                }
+                catch (Exception ex) { }
 
                 await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
             }

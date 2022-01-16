@@ -49,5 +49,16 @@ namespace TicketsStateful
             }
             return toRet.Values.ToList();
         }
+
+        public async Task RemoveTicketById(int id)
+        {
+            using (var tx = this._stateManager.CreateTransaction())
+            {
+                var myDictionary = await this._stateManager.GetOrAddAsync<IReliableDictionary<int, Ticket>>("tickets");
+                await myDictionary.TryRemoveAsync(tx, id);
+
+                await tx.CommitAsync();
+            }
+        }
     }
 }

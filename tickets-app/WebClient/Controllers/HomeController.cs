@@ -14,13 +14,17 @@ namespace WebClient.Controllers
 {
     public class HomeController : Controller
     {
-        private static ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>> servicePartitionClient;
+        private static ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>> statefullService;
+        private static ServicePartitionClient<WcfCommunicationClient<IHistoryStatelessMethods>> historyStatelessService;
         public List<Ticket> activeTickets = new List<Ticket>();
+        public List<Ticket> historyTickets = new List<Ticket>();
 
         public HomeController()
         {
             ViewBag.activeTickets = activeTickets;
-            OpenConnection();
+            ViewBag.historyTickets = historyTickets;
+            OpenConnectionToStatefull();
+            OpenConnectionToHistoryStateless();
         }
 
         public IActionResult Index()
@@ -28,7 +32,7 @@ namespace WebClient.Controllers
             return View();
         }
 
-        private async void OpenConnection()
+        private async void OpenConnectionToStatefull()
         {
             try
             {
@@ -39,10 +43,31 @@ namespace WebClient.Controllers
 
                 for (int i = 0; i < partitionsNumber; i++)
                 {
-                   servicePartitionClient = new ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>>(
+                   statefullService = new ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>>(
                         new WcfCommunicationClientFactory<IStatefulMethods>(clientBinding: binding),
                         new Uri("fabric:/tickets_app/TicketsStateful"),
                         new ServicePartitionKey(index % partitionsNumber));
+                    index++;
+                }
+            }
+            catch (Exception ex) { }
+        }
+
+        private async void OpenConnectionToHistoryStateless()
+        {
+            try
+            {
+                FabricClient fabricClient = new FabricClient();
+                int partitionsNumber = (await fabricClient.QueryManager.GetPartitionListAsync(new Uri("fabric:/tickets_app/StatelessHistory"))).Count;
+                var binding = WcfUtility.CreateTcpClientBinding();
+                int index = 0;
+
+                for (int i = 0; i < partitionsNumber; i++)
+                {
+                    historyStatelessService = new ServicePartitionClient<WcfCommunicationClient<IHistoryStatelessMethods>>(
+                         new WcfCommunicationClientFactory<IHistoryStatelessMethods>(clientBinding: binding),
+                         new Uri("fabric:/tickets_app/StatelessHistory"),
+                         new ServicePartitionKey(index % partitionsNumber));
                     index++;
                 }
             }
@@ -55,7 +80,7 @@ namespace WebClient.Controllers
         {
             try
             {
-                var tickets = await servicePartitionClient.InvokeWithRetryAsync(client => client.Channel.GetAllTickets());
+                var tickets = await statefullService.InvokeWithRetryAsync(client => client.Channel.GetAllTickets());
                 ViewBag.activeTickets = tickets;
 
             } 
@@ -65,9 +90,15 @@ namespace WebClient.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetHistoryTickets()
+        public async Task<IActionResult> GetHistoryTickets()
         {
-            //pozvati history database i uzeti sve arhivirane karte i vratiti na html
+            try
+            {
+                var tickets = await historyStatelessService.InvokeWithRetryAsync(client => client.Channel.GetAllHistoryTickets());
+                ViewBag.historyTickets = tickets;
+
+            }
+            catch (Exception ex) { }
 
             return View("Index");
         }
@@ -75,16 +106,18 @@ namespace WebClient.Controllers
         [HttpPost]
         public async Task<IActionResult> AddTicket(string transportationType, DateTime departureDate, DateTime returnDate)
         {
-            Ticket ticket = new Ticket();
-            ticket.Id = new Random().Next(1, 10000);
-            ticket.TransportationType = transportationType;
-            ticket.PurchaseDate = DateTime.UtcNow;
-            ticket.DepartureTime = departureDate;
-            ticket.ReturnTime = returnDate;
+            Ticket ticket = new Ticket() { 
+                Id = new Random().Next(1, 10000),
+                TransportationType = transportationType,
+                PurchaseDate = DateTime.UtcNow,
+                DepartureTime = departureDate, 
+                ReturnTime = returnDate
+            };
 
             try
             {
-                await servicePartitionClient.InvokeWithRetryAsync(client => client.Channel.AddTicket(ticket));
+                await statefullService.InvokeWithRetryAsync(client => client.Channel.AddTicket(ticket));
+
             } catch(Exception ex) { }
 
             return View("Index");

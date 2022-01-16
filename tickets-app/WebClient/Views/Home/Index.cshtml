@@ -62,11 +62,11 @@
     </div>
 
     <div style="border: 1px dashed black; padding: 20px">
-        <h3>Karte u sistemu:</h3>
+        <h3>Aktivne karte:</h3>
 
-        <button type="button" id="addressSearch" style="margin-top: 10px"
+        <button type="button" id="addressSearch" style="margin-top: 10px; margin-bottom: 10px"
                 onclick="location.href='@Url.Action("GetActiveTickets", "Home")'">
-            Dobavi sve karte
+            REFRESH
         </button>
         <div>
             <table>
@@ -97,30 +97,32 @@
     <div style="border: 1px dashed black; padding: 20px">
         <h3>Istorija karata:</h3>
 
+        <button type="button" id="addressSearch" style="margin-top: 10px; margin-bottom: 10px"
+                onclick="location.href='@Url.Action("GetHistoryTickets", "Home")'">
+            REFRESH
+        </button>
+
         <div>
             <table>
                 <tr>
                     <th>Redni broj</th>
                     <th>Tip prevoza</th>
+                    <th>Datum kupovine</th>
                     <th>Datum polaska</th>
                     <th>Datum povratka</th>
                     <th>Status</th>
                 </tr>
-               
-                <tr>
-                    <td>1</td>
-                    <td>Avion</td>
-                    <td>01. februar 2022</td>
-                    <td>22. februar 2022</td>
-                    <td>Arhiviran</td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>Voz</td>
-                    <td>10. februar 2022</td>
-                    <td>23. februar 2022</td>
-                    <td>Arhiviran</td>
-                </tr>
+                @for (var i = 0; i < @ViewBag?.historyTickets?.Count; i++)
+                {
+                    <tr>
+                        <td>@i</td>
+                        <td>@ViewBag?.historyTickets[i]?.TransportationType</td>
+                        <td>@ViewBag?.historyTickets[i]?.PurchaseDate</td>
+                        <td>@ViewBag?.historyTickets[i]?.DepartureTime</td>
+                        <td>@ViewBag?.historyTickets[i]?.ReturnTime</td>
+                        <td>Arhiviran</td>
+                    </tr>
+                }
             </table>
         </div>
     </div>
