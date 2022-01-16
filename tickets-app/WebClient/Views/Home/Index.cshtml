@@ -56,7 +56,7 @@
             <input type="date" name="returnDate" />
 
             <div style="margin-top: 20px; text-align: center">
-                <button type="submit">Dodaj kartu</button>
+                <button type="submit">KUPI KARTU</button>
             </div>
         </form>
     </div>
@@ -64,7 +64,7 @@
     <div style="border: 1px dashed black; padding: 20px">
         <h3>Karte u sistemu:</h3>
 
-        <button type="button" id="addressSearch"
+        <button type="button" id="addressSearch" style="margin-top: 10px"
                 onclick="location.href='@Url.Action("GetActiveTickets", "Home")'">
             Dobavi sve karte
         </button>
@@ -73,6 +73,7 @@
                 <tr>
                     <th>Redni broj</th>
                     <th>Tip prevoza</th>
+                    <th>Datum kupovine</th>
                     <th>Datum polaska</th>
                     <th>Datum povratka</th>
                     <th>Status</th>
@@ -82,10 +83,10 @@
                     <tr>
                         <td>@i</td>
                         <td>@ViewBag?.activeTickets[i]?.TransportationType</td>
+                        <td>@ViewBag?.activeTickets[i]?.PurchaseDate</td>
                         <td>@ViewBag?.activeTickets[i]?.DepartureTime</td>
                         <td>@ViewBag?.activeTickets[i]?.ReturnTime</td>
                         <td>Aktivan</td>
-                        <td><button type="button" onclick="location.href='@Url.Action("ArchiveAirplane", "Home")'">Kupi</button></td>
                     </tr>
                 }
             </table>

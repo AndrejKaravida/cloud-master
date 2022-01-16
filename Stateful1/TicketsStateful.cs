@@ -24,8 +24,13 @@ namespace TicketsStateful
             {
                 new ServiceReplicaListener(context =>
                 {
-                    return new WcfCommunicationListener<IStatefulMethods>(context, new StatefulMethods(this.StateManager), WcfUtility.CreateTcpListenerBinding(), "AddTicketEndpoint");
-                }, "AddTicketEndpoint")
+                    return new WcfCommunicationListener<IStatefulMethods>(context, new StatefulMethods(this.StateManager), WcfUtility.CreateTcpListenerBinding(), "StatefulEndpoint");
+                }, "StatefulEndpoint")
+
+                //new ServiceReplicaListener(context =>
+                //{
+                //    return new WcfCommunicationListener<IActiveStatelessMethods>(context, new ActiveStatelessMethods(this.StateManager), WcfUtility.CreateTcpListenerBinding(), "ActiveStatelessEndpoint");
+                //}, "ActiveStatelessEndpoint")
             };
         }
 

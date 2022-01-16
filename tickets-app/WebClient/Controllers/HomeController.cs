@@ -17,7 +17,6 @@ namespace WebClient.Controllers
         private static ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>> servicePartitionClient;
         public List<Ticket> activeTickets = new List<Ticket>();
 
-
         public HomeController()
         {
             ViewBag.activeTickets = activeTickets;
@@ -79,6 +78,7 @@ namespace WebClient.Controllers
             Ticket ticket = new Ticket();
             ticket.Id = new Random().Next(1, 10000);
             ticket.TransportationType = transportationType;
+            ticket.PurchaseDate = DateTime.UtcNow;
             ticket.DepartureTime = departureDate;
             ticket.ReturnTime = returnDate;
 
