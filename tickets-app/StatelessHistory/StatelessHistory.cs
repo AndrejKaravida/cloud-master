@@ -20,13 +20,11 @@ namespace StatelessHistory
 {
     internal sealed class StatelessHistory : StatelessService
     {
-        private static ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>> servicePartitionClient;
         private static IMongoCollection<Ticket> mongoCollection;
 
         public StatelessHistory(StatelessServiceContext context)
             : base(context)
         {
-            OpenConnection();
             OpenDbConnection();
         }
 
@@ -36,21 +34,6 @@ namespace StatelessHistory
             var settings = MongoClientSettings.FromConnectionString("mongodb+srv://admin:admin123@energyweathercluster.lkam4.mongodb.net/ticketsDatabase?retryWrites=true&w=majority");
             var client = new MongoClient(settings);
             mongoCollection = client.GetDatabase("ticketsDatabase").GetCollection<Ticket>("history");
-        }
-
-        private async void OpenConnection()
-        {
-            try
-            {
-                FabricClient fabricClient = new FabricClient();
-                int partitionsNumber = (await fabricClient.QueryManager.GetPartitionListAsync(new Uri("fabric:/tickets_app/TicketsStateful"))).Count;
-                var binding = WcfUtility.CreateTcpClientBinding();
-
-                    servicePartitionClient = new ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>>(
-                         new WcfCommunicationClientFactory<IStatefulMethods>(clientBinding: binding),
-                         new Uri("fabric:/tickets_app/TicketsStateful"));
-            }
-            catch (Exception ex) { }
         }
 
         protected override IEnumerable<ServiceInstanceListener> CreateServiceInstanceListeners()
@@ -87,21 +70,53 @@ namespace StatelessHistory
 
                 try
                 {
-                    var tickets = await servicePartitionClient.InvokeWithRetryAsync(client => client.Channel.GetAllTickets());
+                    FabricClient fabricClient = new FabricClient();
+                    int partitionsNumber = (await fabricClient.QueryManager.GetPartitionListAsync(new Uri("fabric:/tickets_app/TicketsStateful"))).Count;
+                    var binding = WcfUtility.CreateTcpClientBinding();
+                    int index = 0;
 
-                    foreach(var ticket in tickets)
+                    for (int i = 0; i < partitionsNumber; i++)
                     {
-                        var existingTicket = await mongoCollection.Find(x => x.Id == ticket.Id).SingleOrDefaultAsync();
-                        if (existingTicket == null)
+                        ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>> servicePartitionClient = new ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>>(
+                             new WcfCommunicationClientFactory<IStatefulMethods>(clientBinding: binding),
+                             new Uri("fabric:/tickets_app/TicketsStateful"),
+                             new ServicePartitionKey(index % partitionsNumber)
+                             );
+
+                        var tickets = await servicePartitionClient.InvokeWithRetryAsync(client => client.Channel.GetAllTickets());
+
+                        foreach (var ticket in tickets)
                         {
-                            if(ticket.PurchaseDate < DateTime.UtcNow)
+                            var existingTicket = await mongoCollection.Find(x => x.Id == ticket.Id).SingleOrDefaultAsync();
+                            if (existingTicket == null)
                             {
-                                await mongoCollection.InsertOneAsync(ticket);
-                                await servicePartitionClient.InvokeWithRetryAsync(client => client.Channel.RemoveTicketById(ticket.Id));
+                                if (ticket.PurchaseDate < DateTime.UtcNow)
+                                {
+                                    await mongoCollection.InsertOneAsync(ticket);
+                                    await servicePartitionClient.InvokeWithRetryAsync(client => client.Channel.RemoveTicketById(ticket.Id));
+
+                                    var myBinding = new NetTcpBinding(SecurityMode.None);
+                                    var myEndpoint = new EndpointAddress("net.tcp://localhost:56002/ActiveServiceEndpoint");
+
+                                    using (var myChannelFactory = new ChannelFactory<IActiveStatelessMethods>(myBinding, myEndpoint))
+                                    {
+                                        try
+                                        {
+                                            var client = myChannelFactory.CreateChannel();
+                                            client.RemoveFromActiveDatabase(ticket.Id);
+
+                                            ((ICommunicationObject)client).Close();
+                                            myChannelFactory.Close();
+                                        }
+                                        catch (Exception e)
+                                        {
+
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
-
                 }
                 catch (Exception ex) { }
 

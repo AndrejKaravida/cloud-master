@@ -20,13 +20,11 @@ namespace StatelessActive
 {
     internal sealed class StatelessActive : StatelessService
     {
-        private static ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>> servicePartitionClient;
         private static IMongoCollection<Ticket> mongoCollection;
 
         public StatelessActive(StatelessServiceContext context)
             : base(context)
         {
-            OpenConnection();
             OpenDbConnection();
         }
 
@@ -35,22 +33,6 @@ namespace StatelessActive
             var settings = MongoClientSettings.FromConnectionString("mongodb+srv://admin:admin123@energyweathercluster.lkam4.mongodb.net/ticketsDatabase?retryWrites=true&w=majority");
             var client = new MongoClient(settings);
             mongoCollection = client.GetDatabase("ticketsDatabase").GetCollection<Ticket>("active");
-        }
-
-        private async void OpenConnection()
-        {
-            try
-            {
-                FabricClient fabricClient = new FabricClient();
-                int partitionsNumber = (await fabricClient.QueryManager.GetPartitionListAsync(new Uri("fabric:/tickets_app/TicketsStateful"))).Count;
-                var binding = WcfUtility.CreateTcpClientBinding();
-                int index = 0;
-
-                servicePartitionClient = new ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>>(
-                     new WcfCommunicationClientFactory<IStatefulMethods>(clientBinding: binding),
-                     new Uri("fabric:/tickets_app/TicketsStateful"));
-            }
-            catch (Exception ex) { }
         }
 
         protected override IEnumerable<ServiceInstanceListener> CreateServiceInstanceListeners()
@@ -87,17 +69,30 @@ namespace StatelessActive
 
                 try
                 {
-                    var tickets = await servicePartitionClient.InvokeWithRetryAsync(client => client.Channel.GetAllTickets());
+                    FabricClient fabricClient = new FabricClient();
+                    int partitionsNumber = (await fabricClient.QueryManager.GetPartitionListAsync(new Uri("fabric:/tickets_app/TicketsStateful"))).Count;
+                    var binding = WcfUtility.CreateTcpClientBinding();
+                    int index = 0;
 
-                    foreach (var ticket in tickets)
+                    for (int i = 0; i < partitionsNumber; i++)
                     {
-                        var existingTicket = await mongoCollection.Find(x => x.Id == ticket.Id).SingleOrDefaultAsync();
-                        if (existingTicket == null)
+                        ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>> servicePartitionClient = new ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>>(
+                             new WcfCommunicationClientFactory<IStatefulMethods>(clientBinding: binding),
+                             new Uri("fabric:/tickets_app/TicketsStateful"),
+                             new ServicePartitionKey(index % partitionsNumber)
+                             );
+
+                        var tickets = await servicePartitionClient.InvokeWithRetryAsync(client => client.Channel.GetAllTickets());
+
+                        foreach (var ticket in tickets)
                         {
-                            await mongoCollection.InsertOneAsync(ticket);
+                            var existingTicket = await mongoCollection.Find(x => x.Id == ticket.Id).SingleOrDefaultAsync();
+                            if (existingTicket == null)
+                            {
+                                await mongoCollection.InsertOneAsync(ticket);
+                            }
                         }
                     }
-
                 }
                 catch (Exception ex) { }
 

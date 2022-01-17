@@ -8,15 +8,13 @@ using Microsoft.ServiceFabric.Services.Communication.Wcf.Client;
 using System;
 using System.Collections.Generic;
 using System.Fabric;
-using System.Threading;
+using System.ServiceModel;
 using System.Threading.Tasks;
 
 namespace WebClient.Controllers
 {
     public class HomeController : Controller
     {
-        private static ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>> statefullService;
-        private static ServicePartitionClient<WcfCommunicationClient<IHistoryStatelessMethods>> historyStatelessService;
         public List<Ticket> activeTickets = new List<Ticket>();
         public List<Ticket> historyTickets = new List<Ticket>();
 
@@ -24,8 +22,6 @@ namespace WebClient.Controllers
         {
             ViewBag.activeTickets = activeTickets;
             ViewBag.historyTickets = historyTickets;
-            OpenConnectionToStatefull();
-            OpenConnectionToHistoryStateless();
         }
 
         public IActionResult Index()
@@ -33,45 +29,26 @@ namespace WebClient.Controllers
             return View();
         }
 
-        private async void OpenConnectionToStatefull()
+        [HttpGet]
+        public async Task<IActionResult> GetActiveTickets()
         {
             try
             {
                 FabricClient fabricClient = new FabricClient();
                 int partitionsNumber = (await fabricClient.QueryManager.GetPartitionListAsync(new Uri("fabric:/tickets_app/TicketsStateful"))).Count;
                 var binding = WcfUtility.CreateTcpClientBinding();
+                int index = 0;
 
-                    statefullService = new ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>>(
+                for (int i = 0; i < partitionsNumber; i++)
+                {
+                    ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>> servicePartitionClient = new ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>>(
                          new WcfCommunicationClientFactory<IStatefulMethods>(clientBinding: binding),
-                         new Uri("fabric:/tickets_app/TicketsStateful")
+                         new Uri("fabric:/tickets_app/TicketsStateful"),
+                         new ServicePartitionKey(index % partitionsNumber)
                          );
-            }
-            catch (Exception ex) { }
-        }
-
-        private async void OpenConnectionToHistoryStateless()
-        {
-            try
-            {
-                FabricClient fabricClient = new FabricClient();
-                int partitionsNumber = (await fabricClient.QueryManager.GetPartitionListAsync(new Uri("fabric:/tickets_app/StatelessHistory"))).Count;
-                var binding = WcfUtility.CreateTcpClientBinding();
-
-                historyStatelessService = new ServicePartitionClient<WcfCommunicationClient<IHistoryStatelessMethods>>(
-                     new WcfCommunicationClientFactory<IHistoryStatelessMethods>(clientBinding: binding),
-                     new Uri("fabric:/tickets_app/StatelessHistory"));
-            }
-            catch (Exception ex) { }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetActiveTickets()
-        {
-            try
-            {
-                var tickets = await statefullService.InvokeWithRetryAsync(client => client.Channel.GetAllTickets());
-                ViewBag.activeTickets = tickets;
-
+                    var tickets = await servicePartitionClient.InvokeWithRetryAsync(client => client.Channel.GetAllTickets());
+                    ViewBag.activeTickets = tickets;
+                }
             }
             catch (Exception ex) { }
 
@@ -81,14 +58,24 @@ namespace WebClient.Controllers
         [HttpGet]
         public async Task<IActionResult> GetHistoryTickets()
         {
-            try
+            var myBinding = new NetTcpBinding(SecurityMode.None);
+            var myEndpoint = new EndpointAddress("net.tcp://localhost:56001/HistoryServiceEndpoint");
+
+            using(var myChannelFactory = new ChannelFactory<IHistoryStatelessMethods>(myBinding, myEndpoint))
             {
-                var tickets = await historyStatelessService.InvokeWithRetryAsync(client => client.Channel.GetAllHistoryTickets());
-                ViewBag.historyTickets = tickets;
+                try
+                {
+                    var client = myChannelFactory.CreateChannel();
+                    var tickets = await client.GetAllHistoryTickets();
+                    ViewBag.historyTickets = tickets;
 
+                    ((ICommunicationObject)client).Close();
+                    myChannelFactory.Close();
+                } catch(Exception e)
+                {
+
+                }
             }
-            catch (Exception ex) { }
-
             return View("Index");
         }
 
@@ -99,15 +86,27 @@ namespace WebClient.Controllers
             {
                 Id = new Random().Next(1, 10000),
                 TransportationType = transportationType,
-                PurchaseDate = DateTime.UtcNow.AddSeconds(15),
+                PurchaseDate = DateTime.UtcNow.AddSeconds(30),
                 DepartureTime = departureDate,
                 ReturnTime = returnDate
             };
 
             try
             {
-                await statefullService.InvokeWithRetryAsync(client => client.Channel.AddTicket(ticket));
+                FabricClient fabricClient = new FabricClient();
+                int partitionsNumber = (await fabricClient.QueryManager.GetPartitionListAsync(new Uri("fabric:/tickets_app/TicketsStateful"))).Count;
+                var binding = WcfUtility.CreateTcpClientBinding();
+                int index = 0;
 
+                for (int i = 0; i < partitionsNumber; i++)
+                {
+                    ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>> servicePartitionClient = new ServicePartitionClient<WcfCommunicationClient<IStatefulMethods>>(
+                         new WcfCommunicationClientFactory<IStatefulMethods>(clientBinding: binding),
+                         new Uri("fabric:/tickets_app/TicketsStateful"),
+                         new ServicePartitionKey(index % partitionsNumber)
+                         );
+                    await servicePartitionClient.InvokeWithRetryAsync(client => client.Channel.AddTicket(ticket));
+                }
             }
             catch (Exception ex) { }
 

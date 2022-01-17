@@ -9,21 +9,16 @@ using System.Fabric;
 using System.Threading;
 using System.Threading.Tasks;
 using Common;
-using Microsoft.ServiceFabric.Services.Communication.Client;
-using Microsoft.ServiceFabric.Services.Communication.Wcf.Client;
-using Microsoft.ServiceFabric.Services.Client;
 using Common.Models;
+using System.ServiceModel;
 
 namespace TicketsStateful
 {
     internal sealed class TicketsStateful : StatefulService
     {
-        private static ServicePartitionClient<WcfCommunicationClient<IActiveStatelessMethods>> activeStatelessService;
-
         public TicketsStateful(StatefulServiceContext context)
             : base(context)
         {
-            OpenConnectionToActiveStateless();
         }
 
         protected override IEnumerable<ServiceReplicaListener> CreateServiceReplicaListeners()
@@ -36,31 +31,26 @@ namespace TicketsStateful
                 }, "StatefulEndpoint")
             };
         }
-        private async void OpenConnectionToActiveStateless()
-        {
-            try
-            {
-                FabricClient fabricClient = new FabricClient();
-                int partitionsNumber = (await fabricClient.QueryManager.GetPartitionListAsync(new Uri("fabric:/tickets_app/StatelessActive"))).Count;
-                var binding = WcfUtility.CreateTcpClientBinding();
 
-                activeStatelessService = new ServicePartitionClient<WcfCommunicationClient<IActiveStatelessMethods>>(
-                     new WcfCommunicationClientFactory<IActiveStatelessMethods>(clientBinding: binding),
-                     new Uri("fabric:/tickets_app/StatelessActive"));
-            }
-            catch (Exception ex) { }
-        }
+
 
         protected override async Task RunAsync(CancellationToken cancellationToken)
         {
             var myDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<int, Ticket>>("tickets");
+            await myDictionary.ClearAsync();
 
-            while (true)
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var myBinding = new NetTcpBinding(SecurityMode.None);
+            var myEndpoint = new EndpointAddress("net.tcp://localhost:56002/ActiveServiceEndpoint");
+
+            using (var myChannelFactory = new ChannelFactory<IActiveStatelessMethods>(myBinding, myEndpoint))
             {
-                cancellationToken.ThrowIfCancellationRequested();
                 try
                 {
-                    var ticketsFromDb = await activeStatelessService.InvokeWithRetryAsync(client => client.Channel.GetAllActiveTickets());
+                    var client = myChannelFactory.CreateChannel();
+
+                    var ticketsFromDb = await client.GetAllActiveTickets();
 
                     using (var tx = this.StateManager.CreateTransaction())
                     {
@@ -75,10 +65,15 @@ namespace TicketsStateful
                         await tx.CommitAsync();
                     }
 
+                    ((ICommunicationObject)client).Close();
+                    myChannelFactory.Close();
                 }
-                catch (Exception e) { }
-                await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
+                catch (Exception e)
+                {
+
+                }
             }
         }
     }
 }
+
