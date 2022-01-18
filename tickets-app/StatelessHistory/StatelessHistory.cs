@@ -8,11 +8,14 @@ using Microsoft.ServiceFabric.Services.Communication.Wcf.Client;
 using Microsoft.ServiceFabric.Services.Communication.Wcf.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
 using MongoDB.Driver;
+using Newtonsoft.Json;
+using RabbitMQ.Client;
 using System;
 using System.Collections.Generic;
 using System.Fabric;
 using System.Globalization;
 using System.ServiceModel;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -64,8 +67,17 @@ namespace StatelessHistory
 
         protected override async Task RunAsync(CancellationToken cancellationToken)
         {
+            var factory = new ConnectionFactory { Uri = new Uri("amqp://guest:guest@localhost:5672") };
+            using var connection = factory.CreateConnection();
+            using var channel = connection.CreateModel();
+            channel.QueueDeclare("demo-queue", durable: true, exclusive: false, autoDelete: false, arguments: null);
+
+            var message = new { Name = "Producer", Message = "Poruka od historija" };
+            var body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
+
             while (true)
             {
+                channel.BasicPublish("", "demo-queue", null, body);
                 cancellationToken.ThrowIfCancellationRequested();
 
                 try

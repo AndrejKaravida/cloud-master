@@ -38,6 +38,11 @@
 
     <div style="border: 1px dashed black; padding: 20px">
 
+        <button type="button" id="addressSearch" style="margin-top: 10px; margin-bottom: 10px"
+                onclick="location.href='@Url.Action("RefreshSummary", "Home")'">
+            REFRESH
+        </button>
+
         <h3>Dodaj novu kartu:</h3>
 
         <form action="/Home/AddTicket" method="post">
@@ -63,11 +68,7 @@
 
     <div style="border: 1px dashed black; padding: 20px">
         <h3>Aktivne karte:</h3>
-
-        <button type="button" id="addressSearch" style="margin-top: 10px; margin-bottom: 10px"
-                onclick="location.href='@Url.Action("GetActiveTickets", "Home")'">
-            REFRESH
-        </button>
+            
         <div>
             <table>
                 <tr>
@@ -97,12 +98,7 @@
     <div style="border: 1px dashed black; padding: 20px">
         <h3>Istorija karata:</h3>
 
-        <button type="button" id="addressSearch" style="margin-top: 10px; margin-bottom: 10px"
-                onclick="location.href='@Url.Action("GetHistoryTickets", "Home")'">
-            REFRESH
-        </button>
-
-        <div>
+         <div>
             <table>
                 <tr>
                     <th>Redni broj</th>

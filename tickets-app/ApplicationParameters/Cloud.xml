@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Application xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="fabric:/tickets_app" xmlns="http://schemas.microsoft.com/2011/01/fabric">
   <Parameters>
+    <Parameter Name="emailstateless_InstanceCount" Value="-1" />
     <Parameter Name="StatelessHistory_InstanceCount" Value="-1" />
     <Parameter Name="StatelessActive_InstanceCount" Value="-1" />
     <Parameter Name="WebClient_InstanceCount" Value="-1" />

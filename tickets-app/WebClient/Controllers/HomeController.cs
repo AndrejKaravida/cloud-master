@@ -5,10 +5,15 @@ using Microsoft.ServiceFabric.Services.Client;
 using Microsoft.ServiceFabric.Services.Communication.Client;
 using Microsoft.ServiceFabric.Services.Communication.Wcf;
 using Microsoft.ServiceFabric.Services.Communication.Wcf.Client;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Fabric;
 using System.ServiceModel;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace WebClient.Controllers
@@ -24,13 +29,35 @@ namespace WebClient.Controllers
             ViewBag.historyTickets = historyTickets;
         }
 
+        private Task CreateConsumer()
+        {
+            var factory = new ConnectionFactory { Uri = new Uri("amqp://guest:guest@localhost:5672") };
+            using var connection = factory.CreateConnection();
+            using var channel = connection.CreateModel();
+            channel.QueueDeclare("demo-queue", durable: true, exclusive: false, autoDelete: false, arguments: null);
+
+            while (true)
+            {
+                var consumer = new EventingBasicConsumer(channel);
+                consumer.Received += (sender, e) =>
+                {
+                    var body = e.Body.ToArray();
+                    var message = Encoding.UTF8.GetString(body);
+                    Debug.WriteLine(message);
+                };
+
+                channel.BasicConsume("demo-queue", true, consumer);
+                Task.Delay(TimeSpan.FromSeconds(5));
+            }
+        }
+
         public IActionResult Index()
         {
             return View();
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetActiveTickets()
+        public async Task<IActionResult> RefreshSummary()
         {
             try
             {
@@ -49,33 +76,29 @@ namespace WebClient.Controllers
                     var tickets = await servicePartitionClient.InvokeWithRetryAsync(client => client.Channel.GetAllTickets());
                     ViewBag.activeTickets = tickets;
                 }
+
+                var myBinding = new NetTcpBinding(SecurityMode.None);
+                var myEndpoint = new EndpointAddress("net.tcp://localhost:56001/HistoryServiceEndpoint");
+
+                using (var myChannelFactory = new ChannelFactory<IHistoryStatelessMethods>(myBinding, myEndpoint))
+                {
+                    try
+                    {
+                        var client = myChannelFactory.CreateChannel();
+                        var tickets = await client.GetAllHistoryTickets();
+                        ViewBag.historyTickets = tickets;
+
+                        ((ICommunicationObject)client).Close();
+                        myChannelFactory.Close();
+                    }
+                    catch (Exception e)
+                    {
+
+                    }
+                }
             }
             catch (Exception ex) { }
 
-            return View("Index");
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetHistoryTickets()
-        {
-            var myBinding = new NetTcpBinding(SecurityMode.None);
-            var myEndpoint = new EndpointAddress("net.tcp://localhost:56001/HistoryServiceEndpoint");
-
-            using(var myChannelFactory = new ChannelFactory<IHistoryStatelessMethods>(myBinding, myEndpoint))
-            {
-                try
-                {
-                    var client = myChannelFactory.CreateChannel();
-                    var tickets = await client.GetAllHistoryTickets();
-                    ViewBag.historyTickets = tickets;
-
-                    ((ICommunicationObject)client).Close();
-                    myChannelFactory.Close();
-                } catch(Exception e)
-                {
-
-                }
-            }
             return View("Index");
         }
 
@@ -110,7 +133,7 @@ namespace WebClient.Controllers
             }
             catch (Exception ex) { }
 
-            return View("Index");
+            return await RefreshSummary();
         }
     }
 }

@@ -33,6 +33,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Stateful1\TicketsStateful.csproj" />
+    <ProjectReference Include="emailstateless\emailstateless.csproj" />
     <ProjectReference Include="StatelessActive\StatelessActive.csproj" />
     <ProjectReference Include="StatelessHistory\StatelessHistory.csproj" />
     <ProjectReference Include="WebClient\WebClient.csproj">
