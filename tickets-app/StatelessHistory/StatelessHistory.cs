@@ -67,17 +67,17 @@ namespace StatelessHistory
 
         protected override async Task RunAsync(CancellationToken cancellationToken)
         {
-            var factory = new ConnectionFactory { Uri = new Uri("amqp://guest:guest@localhost:5672") };
-            using var connection = factory.CreateConnection();
-            using var channel = connection.CreateModel();
-            channel.QueueDeclare("demo-queue", durable: true, exclusive: false, autoDelete: false, arguments: null);
+            //var factory = new ConnectionFactory { Uri = new Uri("amqp://guest:guest@localhost:5672") };
+            //using var connection = factory.CreateConnection();
+            //using var channel = connection.CreateModel();
+            //channel.QueueDeclare("demo-queue", durable: true, exclusive: false, autoDelete: false, arguments: null);
 
-            var message = new { Name = "Producer", Message = "Poruka od historija" };
-            var body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
+            //var message = new { Name = "Producer", Message = "Poruka od historija" };
+            //var body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
 
             while (true)
             {
-                channel.BasicPublish("", "demo-queue", null, body);
+                //channel.BasicPublish("", "demo-queue", null, body);
                 cancellationToken.ThrowIfCancellationRequested();
 
                 try
